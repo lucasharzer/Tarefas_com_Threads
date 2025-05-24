@@ -32,10 +32,17 @@ class Execution:
         self.log = LogTerminal(arquivo)
     
     def create_folder(self):
+        """
+        Criação de pasta do arquivos de resultados.
+        """
         if not os.path.exists(self.pasta_output):
             os.mkdir(self.pasta_output)
 
     def start_consult(self, cep):
+        """
+        Realizar a consulta dos ceps armazenando 
+        todas as informações provenientes dos resultados.
+        """
         infos = dict()
         # Formata o CEP para 8 dígitos
         cep = str(cep).replace("-", "").zfill(8)
@@ -67,6 +74,10 @@ class Execution:
         return infos
     
     def tradicional_run(self):
+        """
+        Iniciar a execução das consultas de maneira serial 
+        e sequencial (forma tradicional).
+        """
         self.create_folder()
 
         for cep in self.planilha.get_data()["CEP"]:

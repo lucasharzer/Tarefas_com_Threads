@@ -1,6 +1,9 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from src import Spreadsheet, LogTerminal
 from datetime import datetime
+import threading
 import requests
+import time
 import os
 
 
@@ -38,25 +41,29 @@ class Execution:
         if not os.path.exists(self.pasta_output):
             os.mkdir(self.pasta_output)
 
-    def start_consult(self, cep):
+    def start_consult(self, cep, threads=False):
         """
         Realizar a consulta dos ceps armazenando 
         todas as informações provenientes dos resultados.
         """
         infos = dict()
+        thread_mark = ""
+        if threads:
+            thread_id = threading.get_ident()
+            thread_mark = f"[Thread {thread_id}] "
+
         # Formata o CEP para 8 dígitos
         cep = str(cep).replace("-", "").zfill(8)
         url = f"https://viacep.com.br/ws/{cep}/json/"
-        self.log.gerar_log("\n")
 
         res = requests.get(url, headers={
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
         })
         if res.status_code == 200:
             dados = res.json()
-            self.log.gerar_log(dados)
+            self.log.gerar_log(f"{thread_mark}{dados}")
         else:
-            self.log.gerar_log("Erro ao consultar o CEP")
+            self.log.gerar_log(f"{thread_mark}Erro ao consultar o CEP")
 
         # Adiciona os dados à planilha
         infos["CEP"] = cep
@@ -78,6 +85,7 @@ class Execution:
         Iniciar a execução das consultas de maneira serial 
         e sequencial (forma tradicional).
         """
+        self.log.gerar_log("Iniciando execução serial...")
         self.create_folder()
 
         for cep in self.planilha.get_data()["CEP"]:
@@ -87,9 +95,30 @@ class Execution:
         # Salvar resultados
         self.log.gerar_log(self.lista)
         self.planilha.save(self.lista, os.path.join(self.pasta_output, "dados.xlsx"))
+        self.log.gerar_log("Finalizando execução serial...")
+    
+    def parallel_run(self, n_threads=10):
+        """
+        Iniciar a execução das consultas de maneira paralela 
+        com múltiplas threads pré-definidas (forma simultânea).
+        """
+        self.log.gerar_log(f"Iniciando execução paralela com {n_threads} threads...")
+        self.create_folder()
+
+        with ThreadPoolExecutor(max_workers=n_threads) as executor:
+            futuros = [executor.submit(self.start_consult, cep, True) for cep in self.planilha.get_data()["CEP"]]
+            for future in as_completed(futuros):
+                self.lista.append(future.result())
+        
+        # Salvar resultados
+        self.log.gerar_log(self.lista)
+        self.planilha.save(self.lista, os.path.join(self.pasta_output, "dados.xlsx"))
+        self.log.gerar_log(f"Finalizando execução paralela com {n_threads} threads...")
 
 
 if __name__ == "__main__":
     execute = Execution()
     # Executando consultas de maneira convencional: sequencialmente
-    execute.tradicional_run()
+    # execute.tradicional_run()
+    # Executando consultas com o uso de múltiplas threads: paralela
+    execute.parallel_run()

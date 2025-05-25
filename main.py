@@ -85,6 +85,7 @@ class Execution:
         Iniciar a execução das consultas de maneira serial 
         e sequencial (forma tradicional).
         """
+        inicio = time.time()
         self.log.gerar_log("Iniciando execução serial...")
         self.create_folder()
 
@@ -96,12 +97,17 @@ class Execution:
         self.log.gerar_log(self.lista)
         self.planilha.save(self.lista, os.path.join(self.pasta_output, "dados.xlsx"))
         self.log.gerar_log("Finalizando execução serial...")
+        fim = time.time()
+        # Salvar tempo de duração da execução
+        tempo = fim - inicio
+        self.log.gerar_log(f"Tempo de execução serial: {tempo:.2f} segundos")
     
     def parallel_run(self, n_threads=10):
         """
         Iniciar a execução das consultas de maneira paralela 
         com múltiplas threads pré-definidas (forma simultânea).
         """
+        inicio = time.time()
         self.log.gerar_log(f"Iniciando execução paralela com {n_threads} threads...")
         self.create_folder()
 
@@ -114,11 +120,15 @@ class Execution:
         self.log.gerar_log(self.lista)
         self.planilha.save(self.lista, os.path.join(self.pasta_output, "dados.xlsx"))
         self.log.gerar_log(f"Finalizando execução paralela com {n_threads} threads...")
+        fim = time.time()
+        # Salvar tempo de duração da execução
+        tempo = fim - inicio
+        self.log.gerar_log(f"Tempo de execução paralela com {n_threads} threads: {tempo:.2f} segundos")
 
 
 if __name__ == "__main__":
     execute = Execution()
     # Executando consultas de maneira convencional: sequencialmente
-    # execute.tradicional_run()
+    execute.tradicional_run()
     # Executando consultas com o uso de múltiplas threads: paralela
-    execute.parallel_run()
+    execute.parallel_run(n_threads=20)

@@ -20,5 +20,11 @@ python main.py
 # Resultados
 
 - Execução sequencial
+<span>
+  <img src="https://github.com/user-attachments/assets/e42cf501-0a39-473b-b0aa-e6396b80ab63">
+</span>
 
 - Execução paralela com 20 threads
+<span>
+  <img src="https://github.com/user-attachments/assets/2de1cb5d-356d-40ae-9ada-265dbf1a229c">
+</span>
